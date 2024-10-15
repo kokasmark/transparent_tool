@@ -5,6 +5,7 @@ import win32process
 import win32api
 import win32con
 from pynput import mouse
+from pynput import keyboard as pynputKeyboard
 import keyboard
 
 opacity = 255
@@ -26,7 +27,17 @@ def on_scroll(x, y, dx, dy):
         opacity = min(max(opacity + dy * 10, 0), 255)
         hwnd = get_hwnds_for_pid(os.getpid())[0]
         win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(0, 0, 1), opacity, win32con.LWA_ALPHA | win32con.LWA_COLORKEY)
+def onpress(key):
+    global opacity
+    try:
+        if keyboard.is_pressed('alt'):
+            value = int(key.char)
+            opacity = min(255,int(255 * (value/10)))
 
+            hwnd = get_hwnds_for_pid(os.getpid())[0]
+            win32gui.SetLayeredWindowAttributes(hwnd, win32api.RGB(0, 0, 1), opacity, win32con.LWA_ALPHA | win32con.LWA_COLORKEY)
+    except Exception as e:
+        pass
 def on_loaded(window):
     window.restore()
     hwnd = get_hwnds_for_pid(os.getpid())[0]
@@ -36,14 +47,14 @@ def on_loaded(window):
                                          win32con.LWA_ALPHA | win32con.LWA_COLORKEY)
 
     window.move(0, 0)
-    with mouse.Listener(on_scroll=on_scroll) as listener:
+    # with mouse.Listener(on_scroll=on_scroll) as listener:
+    #     listener.join()
+
+    with pynputKeyboard.Listener(on_press=onpress) as listener:
         listener.join()
 
 if __name__ == '__main__':
     import ctypes
-
-    
-
     url = input("Url(File or Website): ").strip()
     if os.path.isfile(url):
         url = f'file:///{os.path.abspath(url)}'
